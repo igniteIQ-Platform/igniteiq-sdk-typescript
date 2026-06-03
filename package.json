@@ -1,0 +1,35 @@
+{
+  "name": "@igniteiq/vault-client",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the IgniteIQ Vault API — query home services data from any LLM agent or application",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "igniteiq",
+    "vault",
+    "home-services",
+    "servicetitan",
+    "ai",
+    "llm"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
