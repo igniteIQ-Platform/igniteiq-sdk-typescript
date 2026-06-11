@@ -1,7 +1,7 @@
 {
   "name": "@igniteiq/vault-client",
-  "version": "0.1.0",
-  "description": "TypeScript SDK for the IgniteIQ Vault API — query home services data from any LLM agent or application",
+  "version": "0.2.0",
+  "description": "TypeScript SDK for the IgniteIQ Vault API \u2014 query home services data from any LLM agent or application",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "module": "dist/index.mjs",

@@ -14,4 +14,7 @@ export type {
   AskResponse,
   ToolFormat,
   Granularity,
+  Webhook,
+  WebhookEvent,
+  CreateWebhookInput,
 } from './types';

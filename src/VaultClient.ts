@@ -5,6 +5,8 @@ import type {
   ContextSnapshot,
   AskResponse,
   ToolFormat,
+  Webhook,
+  CreateWebhookInput,
 } from './types';
 import { VaultError } from './errors';
 
@@ -63,6 +65,65 @@ class SchemaClient {
 }
 
 // ---------------------------------------------------------------------------
+// Webhooks sub-client
+// ---------------------------------------------------------------------------
+
+class WebhooksClient {
+  constructor(
+    private readonly doRequest: <T>(
+      method: 'GET' | 'POST' | 'DELETE',
+      path: string,
+      body?: unknown,
+    ) => Promise<T>,
+  ) {}
+
+  /**
+   * Register a webhook. Requires an API key with the `webhooks` scope.
+   *
+   * If you omit `secret`, IgniteIQ generates one and returns it **once** on the
+   * created webhook (`secret` field) — store it immediately to verify the
+   * `X-IgniteIQ-Signature` header on deliveries.
+   *
+   * @example
+   * ```ts
+   * const wh = await client.webhooks.create({
+   *   url: 'https://example.com/iq-hook',
+   *   events: ['forge.run.completed', 'depot.sync.failed'],
+   * });
+   * console.log(wh.secret); // 'whsec_...' (only shown here)
+   * ```
+   */
+  create(input: CreateWebhookInput): Promise<Webhook> {
+    return this.doRequest<Webhook>('POST', '/api/webhooks', input);
+  }
+
+  /**
+   * List active webhooks for the organisation. Secrets are never returned.
+   *
+   * @example
+   * ```ts
+   * const hooks = await client.webhooks.list();
+   * ```
+   */
+  async list(): Promise<Webhook[]> {
+    const res = await this.doRequest<{ webhooks: Webhook[] }>('GET', '/api/webhooks');
+    return res.webhooks ?? [];
+  }
+
+  /**
+   * Deactivate (delete) a webhook by id. Idempotent from the caller's view.
+   *
+   * @example
+   * ```ts
+   * await client.webhooks.delete('wh_abc123');
+   * ```
+   */
+  async delete(webhookId: string): Promise<void> {
+    await this.doRequest<unknown>('DELETE', `/api/webhooks/${encodeURIComponent(webhookId)}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // VaultClient
 // ---------------------------------------------------------------------------
 
@@ -100,6 +161,19 @@ export class VaultClient {
    */
   readonly schema: SchemaClient;
 
+  /**
+   * Manage webhooks — create, list, delete. Requires an API key with the
+   * `webhooks` scope (create one in Studio → Settings → API Keys).
+   *
+   * @example
+   * ```ts
+   * const wh = await client.webhooks.create({ url: 'https://…', events: ['forge.run.completed'] });
+   * const all = await client.webhooks.list();
+   * await client.webhooks.delete(wh.id);
+   * ```
+   */
+  readonly webhooks: WebhooksClient;
+
   constructor(opts: VaultClientOptions) {
     if (!opts.apiKey) throw new Error('VaultClient: apiKey is required');
     if (!opts.orgSlug) throw new Error('VaultClient: orgSlug is required');
@@ -109,6 +183,7 @@ export class VaultClient {
     this.baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, '');
 
     this.schema = new SchemaClient(this.request.bind(this));
+    this.webhooks = new WebhooksClient(this.request.bind(this));
   }
 
   // -------------------------------------------------------------------------
@@ -127,7 +202,7 @@ export class VaultClient {
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
-        'User-Agent': '@igniteiq/vault-client/0.1.0',
+        'User-Agent': '@igniteiq/vault-client/0.2.0',
       },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });

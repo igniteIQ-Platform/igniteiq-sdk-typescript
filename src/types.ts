@@ -132,3 +132,43 @@ export interface AskResponse {
 // ---------------------------------------------------------------------------
 
 export type ToolFormat = 'openai' | 'anthropic' | 'json-schema';
+
+// ---------------------------------------------------------------------------
+// Webhooks
+// ---------------------------------------------------------------------------
+
+/** Events you can subscribe a webhook to. */
+export type WebhookEvent =
+  | 'forge.run.completed'
+  | 'forge.run.failed'
+  | 'depot.sync.completed'
+  | 'depot.sync.failed'
+  | 'vault.schema.updated';
+
+/** A registered webhook. */
+export interface Webhook {
+  id: string;
+  url: string;
+  events: WebhookEvent[];
+  isActive: boolean;
+  createdAt: string;
+  /**
+   * The signing secret. Present **only** in the `create()` response when
+   * IgniteIQ generated it (you omitted `secret`). Store it immediately — it is
+   * never returned again, and never included in `list()`.
+   */
+  secret?: string;
+}
+
+/** Input for registering a webhook. */
+export interface CreateWebhookInput {
+  /** HTTPS endpoint that will receive event POSTs. */
+  url: string;
+  events: WebhookEvent[];
+  /**
+   * Optional signing secret. If omitted, IgniteIQ generates one and returns it
+   * once in the `create()` response (`whsec_…`). Used to compute the
+   * `X-IgniteIQ-Signature` (`sha256=<hmac>`) header on each delivery.
+   */
+  secret?: string;
+}
