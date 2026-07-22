@@ -1,3 +1,9 @@
 node_modules/
 dist/
 *.tsbuildinfo
+
+# Local AI assistant context (personal, not shared with team)
+AGENTS.md
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.local.md
