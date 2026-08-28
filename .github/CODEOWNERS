@@ -1,0 +1,24 @@
+# Who owns what in this repo.
+#
+# LAST matching line wins, not the first — a later, more specific path overrides the
+# default owners below.
+#
+# ⚠️ ADVISORY TODAY, NOT ENFORCING. CODEOWNERS only BLOCKS a merge when branch protection
+# sets `require_code_owner_reviews` AND requires at least one approving review. Every repo
+# in this org currently requires 0 reviews, so these lines auto-request a reviewer and do
+# nothing else. Turning that on is a deliberate decision, not a cleanup — see question 1 of
+# igniteiq-docs/docs/engineering/structural-review-modular-autonomy.md.
+#
+# ⚠️ AN OWNER WITHOUT WRITE ACCESS IS SILENTLY IGNORED. Only @dmiiq and @IgniteIQ-Ryan hold
+# push on this org today. @MLawler-IQ and @joshscott-igniq are read-only, so naming them
+# here would look like ownership and enforce nothing.
+#
+# ⚠️ These assignments are a STARTING POINT, not a statement of how the team is organised.
+# Nobody has yet said who owns what; both owners are named everywhere so no path is
+# unowned. Narrowing them is the point of the exercise — a CODEOWNERS where every line is
+# identical carries no information.
+
+* @dmiiq @IgniteIQ-Ryan
+
+# Published to npm as `@igniteiq/vault-client`. A merge here can become a public release.
+/package.json @dmiiq @IgniteIQ-Ryan
