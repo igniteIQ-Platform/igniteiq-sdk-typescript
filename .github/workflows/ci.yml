@@ -1,0 +1,104 @@
+# CI for a package the public installs from npm.
+#
+# Until 2026-08-30 this repo had NO workflows at all. Nothing checked that it typechecks,
+# builds, or emits the files its own package.json promises — on a package anyone can
+# `npm i @igniteiq/vault-client` and that LLM agents are pointed at.
+#
+# Publishing is manual and stays manual: there is no release job here, so a merge cannot
+# become a public release by accident. This reports whether the thing we WOULD publish is
+# sound.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: typecheck + build (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Two ends of what a CONSUMER might be on. package.json declares no `engines`, so
+        # we are implicitly promising a wide range; 20 is still widely deployed and 24 is
+        # what the rest of this estate runs.
+        node: ["20", "24"]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      # ── THE PROMISE package.json MAKES ────────────────────────────────────────────────
+      #
+      # `main`, `module`, `types` and the `exports` map name four specific files. If a tsup
+      # or tsconfig change stops emitting one — most easily the .d.ts — the package still
+      # publishes and installs, and then every TypeScript consumer fails at compile time
+      # with a missing-types error that looks like their problem, not ours.
+      #
+      # `files` also limits the tarball to dist + README, so anything missing from dist is
+      # missing from the published package with no second chance.
+      - name: dist must contain everything package.json promises
+        run: |
+          set -uo pipefail
+          MISSING=0
+          for f in dist/index.js dist/index.mjs dist/index.d.ts; do
+            if [ -s "$f" ]; then
+              echo "  ok      $f ($(wc -c < "$f") bytes)"
+            else
+              echo "  MISSING $f"
+              MISSING=1
+            fi
+          done
+          if [ "$MISSING" != "0" ]; then
+            echo "::error::The build did not emit a file that package.json's exports map promises."
+            echo "::error::Publishing this would break consumers at install or compile time."
+            exit 1
+          fi
+
+      # A published package that cannot be required/imported is the failure a consumer
+      # meets first. Exercise both module systems, because the exports map claims both.
+      - name: The built package must load both ways
+        run: |
+          set -euo pipefail
+          cd /tmp
+          node -e "const m=require('$GITHUB_WORKSPACE/dist/index.js'); if(!Object.keys(m).length) throw new Error('cjs build exports nothing'); console.log('cjs ok:', Object.keys(m).slice(0,6).join(','))"
+          node --input-type=module -e "import(process.env.GITHUB_WORKSPACE + '/dist/index.mjs').then(m => { if(!Object.keys(m).length) throw new Error('esm build exports nothing'); console.log('esm ok:', Object.keys(m).slice(0,6).join(',')); })"
+
+  version:
+    name: version vs npm (advisory)
+    runs-on: ubuntu-latest
+    # Advisory: being ahead of npm is the NORMAL state between releases. This answers "is
+    # what we are about to publish already published", not "should this merge".
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - name: Compare
+        run: |
+          set -uo pipefail
+          LOCAL=$(node -p "require('./package.json').version")
+          PUBLISHED=$(curl -s --max-time 20 https://registry.npmjs.org/@igniteiq/vault-client | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d)['dist-tags'].latest)}catch{console.log('unknown')}})")
+          echo "repo=$LOCAL  npm=$PUBLISHED"
+          if [ "$LOCAL" = "$PUBLISHED" ]; then
+            echo "::warning::Version $LOCAL is ALREADY on npm. Publishing without bumping will be rejected."
+          else
+            echo "Repo is at $LOCAL, npm has $PUBLISHED — unreleased changes, which is expected between releases."
+          fi
