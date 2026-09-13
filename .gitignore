@@ -4,3 +4,17 @@ dist/
 
 CLAUDE.local.md
 AGENTS.local.md
+
+# Credentials (ENG-765 / VM-05). This package is PUBLIC on npm and examples here take a
+# real Vault API key to run, so a working .env is the natural thing to have sitting in a
+# clone. The leading dot does not match `something.env.yaml` — both shapes are listed on
+# purpose; that gap published a live Firebase Admin key out of igniteiq-platform.
+.env
+.env.*
+*.env
+*.env.yaml
+*.env.yml
+*.key
+*.pem
+service-account*.json
+*-key.json
