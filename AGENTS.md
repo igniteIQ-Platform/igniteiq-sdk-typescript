@@ -2,33 +2,22 @@
 
 > `CLAUDE.md` in this repo is a symlink to this file. Checked in — shared with cloud sessions, CI agents, and teammates.
 
-
 ## ⚠️ Read first: you may not be alone in this checkout
 
-Ten repos live in one shared directory and several agent sessions run against them at once,
-so the checkout you find is not necessarily yours. This has gone wrong twice, and both times
-it looked like success:
+Ten repos live in one shared directory and several agent sessions run against them at once, so
+the checkout you find may not be yours. This has gone wrong twice — a commit pushed onto another
+session's branch, and a foreign uncommitted change carried for a working day — and **both times
+it looked like success.**
 
-- **2026-08-27** — a commit meant for `main` landed and pushed onto *another session's*
-  feature branch, because the shared checkout was on that branch. `git log -1` showed the
-  commit and read exactly like confirmation.
-- **2026-08-31** — `igniteiq-docs` carried another session's uncommitted change for a full
-  working day. `git add -A` would have swept it into an unrelated commit.
-
-**Prefer your own worktree.** Sessions that write code should work in one rather than in the
-shared checkout.
-
-**If you are in the shared checkout:**
-- stage explicit paths — never `git add -A`
-- verify a push by reading `origin/<branch>`, never the local log
-- check before you commit:
+**Prefer your own worktree** if you are writing code. In a shared checkout: **stage explicit
+paths, never `git add -A`**, and **verify a push by reading `origin/<branch>`, never the local
+log.** Check before you commit:
 
 ```
-python3 ~/Development/GitHub/igniteiq-docs/scripts/check_worktree_isolation.py          # this repo
-python3 ~/Development/GitHub/igniteiq-docs/scripts/check_worktree_isolation.py --fleet  # all ten
+python3 ~/Development/GitHub/igniteiq-docs/scripts/check_worktree_isolation.py [--fleet]
 ```
 
-Worktrees are created at `.claude/worktrees/<name>` inside the repo and are gitignored.
+Worktrees live at `.claude/worktrees/<name>` inside the repo and are gitignored.
 
 ## Overview
 
